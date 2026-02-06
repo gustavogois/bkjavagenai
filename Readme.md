@@ -19,6 +19,8 @@ The **primary goal** of this step is to demonstrate **real communication with th
 
 ### Step 02
 
+[Github Repository Branch](https://github.com/gustavogois/bkjavagenai/tree/step02LangChain4j-Quick-Start)
+
 This step introduces **LangChain4j** and keeps the focus on **real API communication** via an integration test.
 
 - [Step 02](./docs/md/step-02.md)
