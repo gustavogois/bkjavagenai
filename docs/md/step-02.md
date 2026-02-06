@@ -7,10 +7,15 @@
 2. Run the integration test:
    `./scripts/run-langchain-integration-test.sh`
 
+Request:
+```
+Say hello and ask how you can help.
+```
+
 Expected output (example):
 
 ```
-LangChainChatController response content: Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today?
+LangChainChatController response content: Hello! How can I assist you today?
 ```
 
 ---

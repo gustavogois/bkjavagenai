@@ -4,6 +4,7 @@ import com.gois.study.bkjavagenai.config.OpenAiProperties;
 import com.gois.study.bkjavagenai.openai.OpenAiResponsesClient;
 import com.gois.study.bkjavagenai.openai.dto.ResponsesRequest;
 import com.gois.study.bkjavagenai.openai.dto.ResponsesResponse;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,6 +30,12 @@ public class ChatService {
                 req
         );
 
+        String content = buildContent(resp);
+
+        return content != null ? content : "";
+    }
+
+    private static @Nullable String buildContent(ResponsesResponse resp) {
         if (resp == null || resp.output() == null || resp.output().isEmpty()) {
             throw new IllegalStateException("OpenAI returned an empty response.");
         }
@@ -43,7 +50,6 @@ public class ChatService {
                 }
             }
         }
-
-        return "";
+        return null;
     }
 }

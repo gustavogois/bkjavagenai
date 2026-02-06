@@ -12,6 +12,11 @@ The **primary goal** of this step is to demonstrate **real communication with th
 2. Run the integration test:
    `./scripts/run-chat-integration-test.sh`
 
+Request:
+```
+Hello! How are you?
+```
+
 Expected output (example):
 
 ```
