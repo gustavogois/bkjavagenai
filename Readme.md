@@ -16,3 +16,9 @@ The **primary goal** of this step is to demonstrate **real communication with th
 [Github Repository Branch](https://github.com/gustavogois/bkjavagenai/tree/step01-hello-LLM)
 
 - [Step 01](./docs/md/step-01.md)
+
+### Step 02
+
+This step introduces **LangChain4j** and keeps the focus on **real API communication** via an integration test.
+
+- [Step 02](./docs/md/step-02.md)
