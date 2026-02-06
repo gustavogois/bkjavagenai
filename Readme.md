@@ -13,4 +13,6 @@ Each book step has its own file and an integration test that makes real API call
 This step implements a minimal, production-leaning Spring Boot application that proxies a user prompt to OpenAI and returns the model’s first answer.
 The **primary goal** of this step is to demonstrate **real communication with the OpenAI API**.
 
+[Github Repository Branch](https://github.com/gustavogois/bkjavagenai/tree/step01-hello-LLM)
+
 - [Step 01](./docs/md/step-01.md)

@@ -1,5 +1,7 @@
 # Step 01 — First Contact: “Hello, LLM” with Spring Boot 4 + Java 21
 
+[Github Repository Branch](https://github.com/gustavogois/bkjavagenai/tree/step01-hello-LLM)
+
 This step implements a minimal, production-leaning Spring Boot application that proxies a user prompt to OpenAI and returns the model’s first answer.
 The **primary goal** of this step is to demonstrate **real communication with the OpenAI API**.
 
