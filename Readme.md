@@ -27,6 +27,8 @@ This step introduces **LangChain4j** and keeps the focus on **real API communica
 
 ### Step 03
 
+[Github Repository Branch](https://github.com/gustavogois/bkjavagenai/tree/step03-Integrating-LLMs-With-Java-Applications)
+
 This step deepens the integration with **prompt engineering**, **persistent memory**, and **structured outputs** (real API calls).
 
 - [Step 03](./docs/md/step-03.md)
