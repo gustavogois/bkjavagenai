@@ -32,3 +32,15 @@ This step introduces **LangChain4j** and keeps the focus on **real API communica
 This step deepens the integration with **prompt engineering**, **persistent memory**, and **structured outputs** (real API calls).
 
 - [Step 03](./docs/md/step-03.md)
+
+### Step 04
+
+[Github Repository Branch](https://github.com/gustavogois/bkjavagenai/tree/step04-RAG)
+
+Add **context-aware flight answers** using the RAG pattern by:
+
+1. Defining a **Flight** domain model with a dedicated endpoint.
+2. Loading internal flight data into an **embedding store** for retrieval.
+3. Returning **structured JSON** responses with guardrails against hallucinations.
+
+- [Step 04](./docs/md/step-04.md)

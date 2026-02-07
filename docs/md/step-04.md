@@ -23,24 +23,162 @@ All validation is done through **real integration tests** (no mocks).
 
 ## Theory Summary
 
-RAG (Retrieval‑Augmented Generation) improves accuracy by injecting **organization‑specific context** into each LLM request. Instead of relying on the model’s general knowledge, we:
+This step implements the same flow represented in the sequence diagrams:
 
-- **Embed internal documents** into vectors (semantic representations).
-- Store them in a **vector store** for similarity search.
-- **Retrieve only relevant chunks** and provide them to the LLM at query time.
+- `docs/sequenceDiagram/rag-sequence-detailed.mmd`
+- `docs/sequenceDiagram/rag-sequence-high-level.mmd`
 
-This reduces hallucinations and keeps answers aligned with proprietary data. In this step, we keep it intentionally lightweight:
+The request does not go directly from controller to LLM anymore. It now goes through a retrieval layer that injects internal company context before generation.
 
-- A **CSV‑style dataset** of flights is stored in `resources`.
-- LangChain4j ingests the file into an **in‑memory embedding store**.
-- A dedicated AI service retrieves context and outputs **structured JSON** for `Flight`.
+### 1) Why plain LLM calls are not enough
 
-Key adaptations vs the book:
+A standard chat flow (`user query -> model answer`) works for general knowledge, but it is weak for organization-specific truth (for example, your internal flight schedule). Prompting helps, but prompting alone cannot create facts that the model was never trained on.
 
-- **Spring Boot 4 + Java 21** conventions.
-- **LangChain4j 1.11.0** with modern RAG APIs.
-- **Embedding model configuration** via `OpenAiProperties`.
-- **Integration tests** instead of curl.
+In Chapter 4 we explicitly keep the guardrail prompt:
+
+```java
+public static final String SYSTEM_PROMPT =
+        "Please limit responses to known facts. "
+                + "If you do not know the context, respond with: "
+                + "\"" + DEFAULT_MESSAGE + "\"";
+```
+
+Source: `src/main/java/com/gois/study/bkjavagenai/config/PromptDefaults.java`
+
+This reduces hallucination behavior, but the main improvement comes from retrieval.
+
+### 2) Keyword search vs semantic vector search
+
+Traditional search (keyword/full-text) matches literal tokens. It is fast and useful, but sensitive to wording differences. If the query wording changes, recall may drop even when intent is the same.
+
+RAG retrieval uses semantic search:
+
+1. Convert documents to embeddings (vectors).
+2. Convert the user query to an embedding in the same vector space.
+3. Retrieve nearest vectors (most semantically related chunks).
+
+In this project, embeddings are configured with OpenAI:
+
+```java
+@Bean
+EmbeddingModel openAiEmbeddingModel(OpenAiProperties props) {
+    return OpenAiEmbeddingModel.builder()
+            .apiKey(props.apiKey())
+            .modelName(props.embeddingModel())
+            .baseUrl(props.baseUrl())
+            .build();
+}
+```
+
+Source: `src/main/java/com/gois/study/bkjavagenai/config/LangChain4jConfig.java`
+
+### 3) RAG pipeline in this implementation
+
+This step follows the canonical RAG stages:
+
+1. **Ingest** internal data (`flight-details.txt`) into a vector store.
+2. **Retrieve** relevant segments for each request.
+3. **Generate** structured output grounded by retrieved context.
+
+Ingestion uses an in-memory vector store and a splitter with overlap (better retrieval quality for tabular-like text):
+
+```java
+@Bean
+InMemoryEmbeddingStore<TextSegment> flightEmbeddingStore(EmbeddingModel embeddingModel,
+                                                         FlightDataCatalog flightDataCatalog) {
+    InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
+
+    EmbeddingStoreIngestor.builder()
+            .embeddingStore(embeddingStore)
+            .embeddingModel(embeddingModel)
+            .documentSplitter(DocumentSplitters.recursive(300, 40))
+            .build()
+            .ingest(flightDataCatalog.documents());
+
+    return embeddingStore;
+}
+```
+
+Source: `src/main/java/com/gois/study/bkjavagenai/config/LangChain4jConfig.java`
+
+The retriever is attached directly to the AI service:
+
+```java
+return AiServices.builder(FlightAssistant.class)
+        .chatModel(flightStructuredChatModel)
+        .systemMessage(PromptDefaults.SYSTEM_PROMPT)
+        .contentRetriever(new EmbeddingStoreContentRetriever(flightEmbeddingStore, embeddingModel))
+        .build();
+```
+
+Source: `src/main/java/com/gois/study/bkjavagenai/config/LangChain4jConfig.java`
+
+At runtime, this means the assistant receives `query + retrieved context`, not only `query`.
+
+### 4) Grounded generation + domain-safe output
+
+Generation is constrained in two independent ways:
+
+- Retrieval grounding (context comes from internal document segments).
+- Structured JSON schema (response shape is validated by model configuration).
+
+The flight model is configured with strict JSON schema:
+
+```java
+ResponseFormat responseFormat = ResponseFormat.builder()
+        .type(ResponseFormatType.JSON)
+        .jsonSchema(schema)
+        .build();
+
+return OpenAiChatModel.builder()
+        .apiKey(props.apiKey())
+        .modelName(props.model())
+        .baseUrl(props.baseUrl())
+        .responseFormat(responseFormat)
+        .strictJsonSchema(true)
+        .build();
+```
+
+Source: `src/main/java/com/gois/study/bkjavagenai/config/LangChain4jConfig.java`
+
+Then the service parses to a typed domain record:
+
+```java
+String response = flightAssistant.chat(message);
+return Optional.of(objectMapper.readValue(response, Flight.class));
+```
+
+Source: `src/main/java/com/gois/study/bkjavagenai/service/FlightInfoService.java`
+
+### 5) Absence as first-class API behavior
+
+This repository models absence explicitly with `Optional<Flight>` and `204 No Content`:
+
+```java
+public Optional<Flight> extractFlight(String message) {
+    if (!flightDataCatalog.hasFlightNumber(message)) {
+        return Optional.empty();
+    }
+    String response = flightAssistant.chat(message);
+    if (PromptDefaults.isDefaultMessage(response)) {
+        return Optional.empty();
+    }
+    ...
+}
+```
+
+```java
+return flightInfoService.extractFlight(request.message())
+        .map(FlightResponse::from)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.noContent().build());
+```
+
+Sources:
+- `src/main/java/com/gois/study/bkjavagenai/service/FlightInfoService.java`
+- `src/main/java/com/gois/study/bkjavagenai/controller/FlightController.java`
+
+This keeps the domain model valid (`Flight` is never “empty/null-filled”) and gives a precise HTTP contract for “not found in known context”.
 
 ---
 
