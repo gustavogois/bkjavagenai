@@ -21,20 +21,21 @@ class LangChainAdvancedIntegrationTests {
     @LocalServerPort
     private int port;
 
+    private final String firstQuestion = "How is the climate in Europe in May?";
+    private final String secondQuestion = "What should I pack for a trip in such a climate?";
+
     @Test
-    void shouldHallucinate() {
+    void withNoContext() {
         RestClient restClient = RestClient.builder()
                 .baseUrl("http://localhost:" + port)
                 .build();
 
-        String firstQuestion = "How is the climate in Europe in May?";
         ResponseEntity<LangChainChatController.ChatResponse> first = restClient.post()
                 .uri("/api/langchain/chat")
                 .body(new LangChainChatController.ChatRequest(firstQuestion))
                 .retrieve()
                 .toEntity(LangChainChatController.ChatResponse.class);
 
-        String secondQuestion = "What should I pack for a trip in such a climate?";
         ResponseEntity<LangChainChatController.ChatResponse> second = restClient.post()
                 .uri("/api/langchain/chat")
                 .body(new LangChainChatController.ChatRequest(secondQuestion))
@@ -49,7 +50,7 @@ class LangChainAdvancedIntegrationTests {
         log.info("First question: {}", firstQuestion);
         log.info("First response: {}", first.getBody().content());
         log.info("Second question: {}", secondQuestion);
-        log.info("(Hallucinating) Second response: {}", second.getBody().content());
+        log.info("(no context) Second response: {}", second.getBody().content());
 
         assertThat(first.getBody().content()).isNotBlank();
         assertThat(second.getBody().content()).isNotBlank();
@@ -67,7 +68,7 @@ class LangChainAdvancedIntegrationTests {
                 .uri("/api/langchain/support/chat")
                 .body(new SupportChatController.ChatRequest(
                         sessionId,
-                        "How is the climate in Europe in May?"
+                        firstQuestion
                 ))
                 .retrieve()
                 .toEntity(SupportChatController.ChatResponse.class);
@@ -76,7 +77,7 @@ class LangChainAdvancedIntegrationTests {
                 .uri("/api/langchain/support/chat")
                 .body(new SupportChatController.ChatRequest(
                         sessionId,
-                        "What should I pack for a trip in such a climate?"
+                        secondQuestion
                 ))
                 .retrieve()
                 .toEntity(SupportChatController.ChatResponse.class);
@@ -86,7 +87,9 @@ class LangChainAdvancedIntegrationTests {
         assertThat(first.getBody()).isNotNull();
         assertThat(second.getBody()).isNotNull();
 
+        log.info("SupportChat first question: {}", firstQuestion);
         log.info("SupportChat first response: {}", first.getBody().content());
+        log.info("SupportChat second question: {}", secondQuestion);
         log.info("SupportChat second response: {}", second.getBody().content());
 
         assertThat(first.getBody().content()).isNotBlank();
