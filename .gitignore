@@ -33,3 +33,5 @@ build/
 .vscode/
 !/.env
 /.env
+chat-memory.db
+chat-memory.db.wal.0

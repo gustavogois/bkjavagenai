@@ -24,3 +24,9 @@ The **primary goal** of this step is to demonstrate **real communication with th
 This step introduces **LangChain4j** and keeps the focus on **real API communication** via an integration test.
 
 - [Step 02](./docs/md/step-02.md)
+
+### Step 03
+
+This step deepens the integration with **prompt engineering**, **persistent memory**, and **structured outputs** (real API calls).
+
+- [Step 03](./docs/md/step-03.md)
