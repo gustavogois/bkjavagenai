@@ -1,6 +1,6 @@
 package com.gois.study.bkjavagenai.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.gois.study.bkjavagenai.model.Aircraft;
 import dev.langchain4j.model.chat.ChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
