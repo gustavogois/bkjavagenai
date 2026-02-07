@@ -43,6 +43,8 @@ RAG is introduced as the cost-effective alternative to:
 
 RAG workflow:
 
+![img.png](img.png)
+
 1. Retrieve relevant internal info for the question (via semantic search)
 
 2. Augment the prompt with that retrieved context

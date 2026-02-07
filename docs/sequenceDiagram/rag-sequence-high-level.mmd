@@ -1,0 +1,19 @@
+sequenceDiagram
+    autonumber
+    actor Customer
+    participant App as Travel App API
+    participant RAG as RAG Pipeline
+    participant KB as Internal Flight Knowledge Base
+    participant LLM as Language Model
+
+    Customer->>App: Ask about a flight
+    App->>RAG: Send user question
+
+    RAG->>KB: Find relevant flight data (semantic/vector search)
+    KB-->>RAG: Return best matching context
+
+    RAG->>LLM: Send question + retrieved context
+    LLM-->>RAG: Generate grounded answer
+
+    RAG-->>App: Structured flight result
+    App-->>Customer: Accurate response (or no content if not found)

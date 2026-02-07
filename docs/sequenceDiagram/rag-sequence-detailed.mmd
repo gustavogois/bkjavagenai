@@ -1,0 +1,44 @@
+sequenceDiagram
+    autonumber
+    actor Client
+    participant API as Spring Boot API
+    participant Controller as FlightController
+    participant Service as FlightInfoService
+    participant Catalog as FlightDataCatalog
+    participant Embed as OpenAI Embedding Model
+    participant Vector as InMemoryEmbeddingStore
+    participant AI as FlightAssistant (LangChain4j)
+    participant LLM as OpenAI Chat Model (Structured JSON)
+
+    Client->>API: POST /api/langchain/flight { message }
+    API->>Controller: Route request
+    Controller->>Service: extractFlight(message)
+
+    Service->>Catalog: hasFlightNumber(message)?
+    alt Unknown flight number
+        Catalog-->>Service: false
+        Service-->>Controller: Optional.empty()
+        Controller-->>Client: 204 No Content
+    else Known or potentially known
+        Catalog-->>Service: true
+        Service->>AI: chat(message)
+
+        AI->>Embed: embed(user query)
+        Embed-->>AI: query vector
+        AI->>Vector: similarity search(query vector)
+        Vector-->>AI: top-k relevant text segments
+
+        AI->>LLM: Prompt + retrieved context (RAG)
+        LLM-->>AI: Structured JSON response
+
+        AI-->>Service: JSON string
+        Service->>Service: Parse JSON -> Flight record (ObjectMapper)
+
+        alt Fallback/default message or parse failure case handled as absence
+            Service-->>Controller: Optional.empty()
+            Controller-->>Client: 204 No Content
+        else Valid flight
+            Service-->>Controller: Optional<Flight>
+            Controller-->>Client: 200 OK + Flight JSON
+        end
+    end

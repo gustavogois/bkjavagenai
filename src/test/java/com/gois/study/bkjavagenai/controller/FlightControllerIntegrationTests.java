@@ -17,13 +17,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FlightControllerIntegrationTests {
 
     private static final Logger log = LoggerFactory.getLogger(FlightControllerIntegrationTests.class);
+    public static final String TELL_ME_ABOUT_FLIGHT_DETAILS_FOR_AA_4041 = "Tell me about flight details for AA4041.";
 
     @LocalServerPort
     private int port;
 
     @Test
     void shouldReturnStructuredFlightResponse() {
-        ResponseEntity<FlightController.FlightResponse> response = postFlight("Tell me about flight details for AA4041.");
+        ResponseEntity<FlightController.FlightResponse> response = postFlight(TELL_ME_ABOUT_FLIGHT_DETAILS_FOR_AA_4041);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
@@ -37,7 +38,7 @@ class FlightControllerIntegrationTests {
 
     @Test
     void shouldReturnFlightDetailsFromRagData() {
-        ResponseEntity<FlightController.FlightResponse> response = postFlight("Tell me about flight details for AA4041.");
+        ResponseEntity<FlightController.FlightResponse> response = postFlight(TELL_ME_ABOUT_FLIGHT_DETAILS_FOR_AA_4041);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
